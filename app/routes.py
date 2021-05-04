@@ -28,12 +28,39 @@ def books():
         return Response(f"Book {new_book.title} successfully created", status=201)
 
 
-@books_bp.route("/<book_id>", methods=["GET"])
+@books_bp.route("/<book_id>", methods=["GET", "PUT", "DELETE"])
 def book(book_id):
     book = Book.query.get(book_id)
 
-    return {
-        "id": book.id,
-        "title": book.title,
-        "description": book.description
-    }
+    if request.method == "GET":
+        return {
+            "id": book.id,
+            "title": book.title,
+            "description": book.description
+        }
+    # else
+    elif request.method == "PUT":
+        request_body = request.get_json()
+
+        try:
+            book.title = request_body["title"]
+            book.description = request_body["description"]
+
+            # Save Action
+            # db.session.add(book)
+            db.session.commit()
+            return {
+                    "id": book.id,
+                    "title": book.title,
+                    "description": book.description
+            }, 200
+        except KeyError:
+            return {
+                "message": "Request requires both 'title' and 'description'"
+            }, 400
+    elif request.method == "DELETE":
+        db.session.delete(book)
+        db.session.commit()
+        return {
+            "Message": f"Book with title {book.title} has been deleted",
+        }, 200
